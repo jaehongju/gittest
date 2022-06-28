@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+  	
+  	<!-- do not fix -->
+  	<bean id="applicationContextHolder" class="com.youhost.webcore.ApplicationContextHolder"></bean>
+	  	
+  	<!-- DataSources -->
+  	<!-- EMS DataSource Start -->	
+	<bean id="emsDataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="shutdown">
+		<constructor-arg>
+		        <bean class="com.zaxxer.hikari.HikariConfig">
+		            <constructor-arg>
+		                <props>
+		                    <prop key="dataSource.url">jdbc:mysql://localhost/xfra_new?useUnicode=true&amp;characterEncoding=utf8&amp;autoReconnect=true&amp;allowMultiQueries=true</prop>
+		                    <prop key="dataSource.user">emsone</prop>
+		                    <prop key="dataSource.password">dldpadptm@%*)</prop>
+		                </props>
+		            </constructor-arg>
+		            <property name="dataSourceClassName" value="org.mariadb.jdbc.MySQLDataSource" />
+		            <property name="minimumIdle" value="10" />
+		            <property name="maximumPoolSize" value="30" />
+		        </bean>
+		    </constructor-arg>		
+	</bean> 
+		
+	<!-- SqlSessionFactory -->
+	<bean id="emsSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="emsDataSource" />
+		<property name="configLocation" value="classpath:/config/config-mybatis.xml"/>
+		<property name="mapperLocations">
+			<list>
+				<value>classpath:sqlmap/ems/*/*.xml</value>		
+			</list>
+		</property>
+	</bean>	
+	
+	<!-- SqlSession -->
+	<bean id="emsSqlSession" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
+		<constructor-arg index="0" ref="emsSqlSessionFactory"/>
+	</bean>
+	
+	<!-- Transaction Managers -->
+	<bean id="emsTm" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="emsDataSource"></property>
+	</bean>
+	<!-- EMS DataSource End -->
+	
+	<!-- FMS DataSource Start -->
+  	<!-- DataSources -->	
+	<bean id="fmsDataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="shutdown">
+		<constructor-arg>
+		        <bean class="com.zaxxer.hikari.HikariConfig">
+		            <constructor-arg>
+		                <props>
+		                    <prop key="dataSource.url">jdbc:mysql://114.108.185.227/FMS?useUnicode=true&amp;characterEncoding=utf8&amp;autoReconnect=true&amp;allowMultiQueries=true</prop>
+		                    <prop key="dataSource.user">emsone</prop>
+		                    <prop key="dataSource.password">dldpadptm@%*)</prop>
+		                </props>
+		            </constructor-arg>
+		            <property name="dataSourceClassName" value="org.mariadb.jdbc.MySQLDataSource" />
+		            <property name="minimumIdle" value="13" />
+		            <property name="maximumPoolSize" value="300" />
+		        </bean>
+		    </constructor-arg>		
+	</bean> 
+		
+	<!-- SqlSessionFactory -->
+	<bean id="fmsSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="fmsDataSource" />
+		<property name="configLocation" value="classpath:/config/config-mybatis.xml"/>
+		<property name="mapperLocations">
+			<list>
+				<value>classpath:sqlmap/fms/*/*.xml</value>		
+			</list>
+		</property>
+	</bean>	
+	
+	<!-- SqlSession -->
+	<bean id="fmsSqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg index="0" ref="fmsSqlSessionFactory"/>
+	</bean>
+	
+	<!-- Transaction Managers -->
+	<bean id="fmsTm" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="fmsDataSource"></property>
+	</bean>
+	<!-- FMS DataSource End -->
+	
+	
+	<!-- SqlSessionResolver -->
+	<bean id="transactionManager" class="com.youhost.common.db.WiredTransactionManager">
+		<property name="transactionManagers">
+			<list>
+				<ref bean="emsTm"/>
+				<ref bean="fmsTm"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="sqlSessionResolver" class="com.youhost.common.db.SqlSessionResolver">
+		<property name="sqlSessionFactoryMap">
+			<map>
+				<entry key="ems" value-ref="emsSqlSessionFactory"/>
+				<entry key="fms" value-ref="fmsSqlSessionFactory"/>
+			</map>
+		</property>
+		<property name="sqlSessionMap">
+			<map>
+				<entry key="ems" value-ref="emsSqlSession"/>
+				<entry key="fms" value-ref="fmsSqlSession"/>
+			</map>
+		</property>
+	</bean>
+		
+	<!-- SqlSessionInvoker -->
+	<bean id="sqlSessionInvoker" class="com.youhost.common.db.SqlSessionInvoker">
+		<property name="sqlSessionResolver" ref="sqlSessionResolver"/>
+	</bean>
+</beans>

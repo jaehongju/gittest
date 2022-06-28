@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ems_module">
+	<!-- select -->
+			
+	<sql id="selCommon">
+		SELECT m.module_id , m.module_type , m.module_level , m.device_id , m.channel_no 
+			, m.circuit_type , m.circuit_rst , m.circuit_side, m.circuit_position
+			, m.use_yn , m.alarm_yn , m.min_power , m.max_power , m.max_zctcurrent , m.std_voltage
+			, m.reg_date , m.mod_date 
+		FROM tbl_module m
+	</sql>
+	
+	<select id="findByDeviceChannel" parameterType="kr.youhost.ems.api.model.Module" resultType="kr.youhost.ems.api.model.Module">
+		<include refid="selCommon"/>	
+		WHERE device_id = #{deviceId} AND channel_no = #{channelNo} 	
+	</select>
+</mapper>

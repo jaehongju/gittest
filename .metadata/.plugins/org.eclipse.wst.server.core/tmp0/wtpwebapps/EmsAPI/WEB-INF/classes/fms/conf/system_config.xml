@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="fms_system_config">
+	<!-- select -->
+	<sql id="selCommon">
+		SELECT config_no, config_group, config_nm, config_title, config_value, config_value_type, config_value_unit
+				, reg_date , mod_date  
+		FROM tbl_system_config
+	</sql>
+	<select id="finds" parameterType="hashmap" resultType="kr.youhost.ems.api.model.SystemConfig">
+		<include refid="selCommon"/>	
+		WHERE 1=1
+			<if test="null != configGroup">
+				AND config_group = #{configGroup}
+			</if>
+			<if test="null != configNm">
+				AND config_nm = #{configNm}
+			</if>			
+	</select>	
+</mapper>

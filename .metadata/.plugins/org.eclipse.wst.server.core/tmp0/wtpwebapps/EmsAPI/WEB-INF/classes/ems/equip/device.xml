@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ems_device">
+	<!-- select -->
+			
+	<sql id="selCommon">
+		SELECT d.device_id , d.device_type_cd , d.ipaddress, d.port, d.protocol_no, d.power_ch
+			, (SELECT equip_name FROM tbl_equip e WHERE e.equip_id=d.device_id) AS equip_name
+			, d.use_yn , d.reg_date , d.mod_date , d.setup_at, d.correct_at
+		FROM tbl_device d
+	</sql>
+	
+	
+	<select id="deviceTypes" resultType="kr.youhost.ems.api.model.DeviceType">
+		SELECT device_type_cd, device_type_nm, device_type_alias
+		FROM tbl_device_type
+		WHERE use_yn = 'Y'
+	</select>
+	
+	<!-- select by key	 -->
+	<select id="findByKey" parameterType="int" resultType="kr.youhost.ems.api.model.Device">
+		<include refid="selCommon"/>
+		WHERE device_id = #{deviceId} 
+	</select>
+	
+	<sql id="whereCommon">
+	</sql>
+	
+	<sql id="devicePosition">
+		(
+			SELECT CONCAT(f.floor_nm, ' > ', s.sector_nm) AS device_position
+			FROM (		
+				SELECT a.device_id, e.equip_type_cd, e.equip_name AS sector_nm
+				FROM (
+					SELECT d.device_id, e.parent_equip_id
+					FROM tbl_device d
+					JOIN tbl_equip e
+					ON d.device_id=e.equip_id
+				) a
+				JOIN tbl_equip e
+				ON a.parent_equip_id=e.equip_id
+			) s
+			JOIN (
+				SELECT a.device_id, e.equip_type_cd, e.equip_name AS floor_nm
+				FROM (
+					SELECT a.device_id, e.parent_equip_id
+					FROM (
+						SELECT d.device_id, e.parent_equip_id
+						FROM tbl_device d
+						JOIN tbl_equip e
+						ON d.device_id=e.equip_id
+					) a
+					JOIN tbl_equip e
+					ON a.parent_equip_id=e.equip_id
+				) a
+				JOIN tbl_equip e
+				ON a.parent_equip_id=e.equip_id
+			) f
+			ON s.device_id=f.device_id
+			WHERE s.device_id=d.device_id
+		) AS device_position
+	</sql>
+	
+	<select id="devices" resultType="kr.youhost.ems.api.model.Device">
+		SELECT d.device_id , d.device_type_cd , d.ipaddress, d.port, d.use_yn, d.mod_date, d.setup_at, d.correct_at 
+			, d.power_ch
+			, (SELECT equip_name FROM tbl_equip e WHERE e.equip_id=d.device_id) AS equip_name
+			, (SELECT protocol FROM tbl_power_protocol p WHERE p.protocol_no = d.protocol_no ) AS powerProtocol
+		
+		FROM tbl_device d
+		WHERE 1=1
+		<if test="deviceTypeCd != null">
+			AND device_type_cd = #{deviceTypeCd}
+		</if>
+		<choose>
+			<when test="lastAt != null">
+				AND mod_date > TIMESTAMP(#{lastAt})
+			</when>		
+			<otherwise>
+				AND use_yn = 'Y'
+			</otherwise>
+		</choose>
+	</select>
+			
+</mapper>

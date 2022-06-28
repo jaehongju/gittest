@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ems_power">
+	<select id="panelModuleNows" parameterType="int" resultType="kr.youhost.ems.api.model.PanelModuleNow">
+		SELECT c.panel_id, c.module_id, c.circuit_type, c.circuit_rst, c.device_id, c.channel_no, c.circuit_side, c.circuit_position
+					, IFNULL(n.current_r,0) AS currentR, IFNULL(n.current_s,0) AS currentS, IFNULL(n.current_t,0) AS currentT
+					, IFNULL(n.active_power_r,0) AS activePowerR, IFNULL(n.active_power_s,0) AS activePowerS, IFNULL(n.active_power_t,0) AS activePowerT
+					, (SELECT equip_name FROM tbl_equip e WHERE e.equip_id=c.module_id) AS moduleNm
+		FROM (
+			SELECT p.panel_id, m.module_id, m.circuit_type, m.circuit_rst, m.device_id, m.channel_no, m.circuit_side, m.circuit_position
+			FROM tbl_module m
+			JOIN tbl_panel p
+			ON m.device_id = p.device_id
+			WHERE m.module_type=1 AND m.use_yn='Y' AND p.panel_id=#{panelId} 
+		) c
+		LEFT JOIN tbl_power_now n
+		ON c.device_id=n.device_id AND c.channel_no=n.channel_no
+		ORDER BY c.circuit_position, c.circuit_side
+	</select>
+	
+	<insert id="savePowerNows" parameterType="kr.youhost.ems.api.model.PowerNow">
+	INSERT INTO tbl_power_now (device_id, channel_no, reg_date
+											, current_r, current_s, current_t, current_avg
+											, tdd_current_r, tdd_current_s, tdd_current_t
+											, thd_current_r, thd_current_s, thd_current_t, zct_current
+											, active_power_r, active_power_s, active_power_t, active_power
+											, reactive_power_r, reactive_power_s, reactive_power_t, reactive_power
+											, apparent_power_r, apparent_power_s, apparent_power_t
+											, active_power_qty, reactive_power_qty	, frequency
+											, power_factor_r, power_factor_s, power_factor_t
+											, voltage_r, voltage_s, voltage_t, avg_voltage
+											, line_voltage_r, line_voltage_s, line_voltage_t, avg_line_voltage
+											, thd_voltage_r, thd_voltage_s, thd_voltage_t, current_unbalance, voltage_unbalance, line_voltage_unbalance)
+	VALUES 
+		<foreach item="item" collection="list" separator="," >
+		(
+			#{item.deviceId}, #{item.channelNo}, TIMESTAMP(#{item.regDate})
+			, #{item.currentR}, #{item.currentS}, #{item.currentT}, #{item.currentAvg}
+			, #{item.tddCurrentR}, #{item.tddCurrentS}, #{item.tddCurrentT}	
+			, #{item.thdCurrentR}, #{item.thdCurrentS}, #{item.thdCurrentT}
+			, #{item.zctCurrent}
+			, #{item.activePowerR}, #{item.activePowerS}, #{item.activePowerT}, #{item.activePower}
+			, #{item.reactivePowerR}, #{item.reactivePowerS}, #{item.reactivePowerT}, #{item.reactivePower}
+			, #{item.apparentPowerR}, #{item.apparentPowerS}, #{item.apparentPowerT}
+			, #{item.activePowerQty}	, #{item.reactivePowerQty}, #{item.frequency}
+			, #{item.powerFactorR}, #{item.powerFactorS}, #{item.powerFactorT}
+			, #{item.voltageR}, #{item.voltageS}, #{item.voltageT} , #{item.avgVoltage}
+			, #{item.lineVoltageR}, #{item.lineVoltageS}, #{item.lineVoltageT} , #{item.avgLineVoltage}
+			, #{item.thdVoltageR}, #{item.thdVoltageS}, #{item.thdVoltageT}, #{item.currentUnbalance}, #{item.voltageUnbalance}, #{item.lineVoltageUnbalance}
+		)
+		</foreach>			
+	ON DUPLICATE KEY UPDATE 
+		reg_date = TIMESTAMP(VALUES(reg_date))    
+		, current_r = VALUES(current_r), current_s = VALUES(current_s), current_t = VALUES(current_t), current_avg = VALUES(current_avg)    
+		, tdd_current_r = VALUES(tdd_current_r), tdd_current_s = VALUES(tdd_current_s), tdd_current_t = VALUES(tdd_current_t)    
+		, thd_current_r = VALUES(thd_current_r), thd_current_s = VALUES(thd_current_s), thd_current_t = VALUES(thd_current_t)    
+		, zct_current = VALUES(zct_current)    , active_power_r = VALUES(active_power_r), active_power_s = VALUES(active_power_s), active_power_t = VALUES(active_power_t), active_power = VALUES(active_power)    
+		, reactive_power_r = VALUES(reactive_power_r), reactive_power_s = VALUES(reactive_power_s), reactive_power_t = VALUES(reactive_power_t), reactive_power = VALUES(reactive_power)    
+		, apparent_power_r = VALUES(apparent_power_r), apparent_power_s = VALUES(apparent_power_s), apparent_power_t = VALUES(apparent_power_t)    
+		, active_power_qty = VALUES(active_power_qty), reactive_power_qty = VALUES(reactive_power_qty)    , frequency = VALUES(frequency)    
+		, power_factor_r = VALUES(power_factor_r), power_factor_s = VALUES(power_factor_s), power_factor_t = VALUES(power_factor_t)    
+		, voltage_r = VALUES(voltage_r), voltage_s = VALUES(voltage_s), voltage_t = VALUES(voltage_t), avg_voltage = VALUES(avg_voltage)    
+		, line_voltage_r = VALUES(line_voltage_r), line_voltage_s = VALUES(line_voltage_s), line_voltage_t = VALUES(line_voltage_t), avg_line_voltage = VALUES(avg_line_voltage)    
+		, thd_voltage_r = VALUES(thd_voltage_r), thd_voltage_s = VALUES(thd_voltage_s), thd_voltage_t = VALUES(thd_voltage_t) , current_unbalance = VALUES(current_unbalance)	
+		, voltage_unbalance = VALUES(voltage_unbalance), line_voltage_unbalance = VALUES(line_voltage_unbalance)	
+	</insert>
+	
+	<insert id="savePowerNow" parameterType="kr.youhost.ems.api.model.PowerNow">
+		INSERT INTO tbl_power_now (device_id, channel_no, reg_date
+												, current_r, current_s, current_t, current_avg
+												, tdd_current_r, tdd_current_s, tdd_current_t
+												, thd_current_r, thd_current_s, thd_current_t
+												, zct_current
+												, active_power_r, active_power_s, active_power_t, active_power
+												, reactive_power_r, reactive_power_s, reactive_power_t, reactive_power
+												, apparent_power_r, apparent_power_s, apparent_power_t
+												, active_power_qty, reactive_power_qty	, frequency
+												, power_factor_r, power_factor_s, power_factor_t
+												, voltage_r, voltage_s, voltage_t, avg_voltage
+												, line_voltage_r, line_voltage_s, line_voltage_t, avg_line_voltage
+												, thd_voltage_r, thd_voltage_s, thd_voltage_t, current_unbalance, voltage_unbalance, line_voltage_unbalance)
+		VALUES 
+			(
+				#{deviceId}, #{channelNo}, TIMESTAMP(#{regDate})
+				, #{currentR}, #{currentS}, #{currentT}, #{currentAvg}
+				, #{tddCurrentR}, #{tddCurrentS}, #{tddCurrentT}	
+				, #{thdCurrentR}, #{thdCurrentS}, #{thdCurrentT}
+				, #{zctCurrent}
+				, #{activePowerR}, #{activePowerS}, #{activePowerT}, #{activePower}
+				, #{reactivePowerR}, #{reactivePowerS}, #{reactivePowerT}, #{reactivePower}
+				, #{apparentPowerR}, #{apparentPowerS}, #{apparentPowerT}
+				, #{activePowerQty}	, #{reactivePowerQty}, #{frequency}
+				, #{powerFactorR}, #{powerFactorS}, #{powerFactorT}
+				, #{voltageR}, #{voltageS}, #{voltageT} , #{avgVoltage}
+				, #{lineVoltageR}, #{lineVoltageS}, #{lineVoltageT} , #{avgLineVoltage}
+				, #{thdVoltageR}, #{thdVoltageS}, #{thdVoltageT} , #{currentUnbalance}, #{item.voltageUnbalance}, #{item.lineVoltageUnbalance}
+			)		
+		ON DUPLICATE KEY UPDATE 
+			reg_date = TIMESTAMP(#{regDate})
+			, current_r = #{currentR}, current_s = #{currentS}, current_t = #{currentT}, current_avg = #{currentAvg}
+			, tdd_current_r = #{tddCurrentR}, tdd_current_s = #{tddCurrentS}, tdd_current_t = #{tddCurrentT}
+			, thd_current_r = #{thdCurrentR}, thd_current_s = #{thdCurrentS}, thd_current_t = #{thdCurrentT}
+			, zct_current = #{zctCurrent}
+			, active_power_r = #{activePowerR}, active_power_s = #{activePowerS}, active_power_t = #{activePowerT}, active_power = #{activePower}
+			, reactive_power_r = #{reactivePowerR}, reactive_power_s = #{reactivePowerS}, reactive_power_t = #{reactivePowerT}, reactive_power = #{reactivePower}
+			, apparent_power_r = #{apparentPowerR}, apparent_power_s = #{apparentPowerS}, apparent_power_t = #{apparentPowerT}
+			, active_power_qty = #{activePowerQty}, reactive_power_qty = #{reactivePowerQty}
+			, frequency = #{frequency}
+			, power_factor_r = #{powerFactorR}, power_factor_s = #{powerFactorS}, power_factor_t = #{powerFactorT}
+			, voltage_r = #{voltageR}, voltage_s = #{voltageS}, voltage_t = #{voltageT}, avg_voltage = #{avgVoltage}
+			, line_voltage_r = #{lineVoltageR}, line_voltage_s = #{lineVoltageS}, line_voltage_t = #{lineVoltageT}, avg_line_voltage = #{avgLineVoltage}
+			, thd_voltage_r = #{thdVoltageR}, thd_voltage_s = #{thdVoltageS}, thd_voltage_t = #{thdVoltageT}, current_unbalance=#{currentUnbalance}
+			, voltage_unbalance=#{voltageUnbalance}, line_voltage_unbalance=#{lineVoltageUnbalance}
+	</insert>
+</mapper>

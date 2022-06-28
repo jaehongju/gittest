@@ -1,0 +1,5 @@
+#Tomcat publish data
+#Thu Apr 11 15:16:04 KST 2019
+org.eclipse.jst.j2ee.server\:utils=WEB-INF/lib/utils-0.0.1-SNAPSHOT.jar
+org.eclipse.jst.j2ee.server\:youhost_common=WEB-INF/lib/youhost_common-0.0.1.jar
+org.eclipse.jst.jee.server\:/binary\:C\:\\Users\\Administrator\\.m2\\repository\\org\\springframework\\spring-web\\4.3.9.RELEASE\\spring-web-4.3.9.RELEASE.jar=WEB-INF/lib/spring-web-4.3.9.RELEASE.jar
